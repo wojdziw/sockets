@@ -4,8 +4,8 @@ tcp_client.c: the source file of the client in tcp transmission
 
 #include "headsock.h"
 
-float str_cli(FILE *fp, int sockfd, long *len);                       //transmission function
-void tv_sub(struct  timeval *out, struct timeval *in);	    //calcu the time interval between out and in
+float str_cli(FILE *fp, int sockfd, long *len, int packet_length); //transmission function
+void tv_sub(struct  timeval *out, struct timeval *in); //calcu the time interval between out and in
 
 int main(int argc, char **argv)
 {
@@ -18,7 +18,9 @@ int main(int argc, char **argv)
 	struct in_addr **addrs;
 	FILE *fp;
 
-	if (argc != 2) {
+	int packet_length = atof(argv[2]);
+
+	if (argc != 3) {
 		printf("parameters not match");
 	}
 
@@ -65,7 +67,7 @@ int main(int argc, char **argv)
 		exit(0);
 	}
 
-	ti = str_cli(fp, sockfd, &len); //perform the transmission and receiving
+	ti = str_cli(fp, sockfd, &len, packet_length); //perform the transmission and receiving
 	rt = (len/(float)ti); //caculate the average transmission rate
 	printf("Time(ms) : %.3f, Data sent(byte): %d\nData rate: %f (Kbytes/s)\n", ti, (int)len, rt);
 
@@ -75,11 +77,11 @@ int main(int argc, char **argv)
 	exit(0);
 }
 
-float str_cli(FILE *fp, int sockfd, long *len)
+float str_cli(FILE *fp, int sockfd, long *len, int packet_length)
 {
 	char *buf;
 	long lsize, ci;
-	char sends[DATALEN];
+	char sends[packet_length];
 	struct ack_so ack;
 	int n, slen;
 	float time_inv = 0.0;
@@ -91,7 +93,7 @@ float str_cli(FILE *fp, int sockfd, long *len)
 	lsize = ftell (fp);
 	rewind (fp);
 	printf("The file length is %d bytes\n", (int)lsize);
-	printf("the packet length is %d bytes\n",DATALEN);
+	printf("the packet length is %d bytes\n",packet_length);
 
 // allocate memory to contain the whole file.
 	buf = (char *) malloc (lsize);
@@ -105,13 +107,13 @@ float str_cli(FILE *fp, int sockfd, long *len)
 	gettimeofday(&sendt, NULL);	//get the current time
 	while(ci<= lsize)
 	{  
-        printf("ci is: %ld ", ci);
+        printf("So far sent %ld bytes \n", ci);
         packetNo ++;
         
 		if ((lsize+1-ci) <= DATALEN)
 			slen = lsize+1-ci;
 		else 
-			slen = DATALEN;
+			slen = packet_length;
 		memcpy(sends, (buf+ci), slen);
 		n = send(sockfd, &sends, slen, 0);
 		if(n == -1) {
@@ -120,14 +122,14 @@ float str_cli(FILE *fp, int sockfd, long *len)
 		}
 		ci += slen;
         
-        //receive the ack
+        //receive the ACK
         if ((n= recv(sockfd, &ack, 2, 0))==-1) {
             printf("error when receiving\n");
             exit(1);
         } else {
             printf("Ack %d received, it is: %d \n", packetNo, ack.num);
         }
-        if (ack.num != 1|| ack.len != 0) {
+        if (ack.num != 1) {
             printf("Error in transmission! Transmitting again...\n");
             ci -= slen;
         }
