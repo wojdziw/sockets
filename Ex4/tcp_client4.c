@@ -84,6 +84,7 @@ float str_cli(FILE *fp, int sockfd, long *len)
 	int n, slen;
 	float time_inv = 0.0;
 	struct timeval sendt, recvt;
+    int packetNo = 0;
 	ci = 0;
 
 	fseek (fp , 0 , SEEK_END);
@@ -103,7 +104,10 @@ float str_cli(FILE *fp, int sockfd, long *len)
 	buf[lsize] ='\0';	//append the end byte
 	gettimeofday(&sendt, NULL);	//get the current time
 	while(ci<= lsize)
-	{
+	{  
+        printf("ci is: %ld ", ci);
+        packetNo ++;
+        
 		if ((lsize+1-ci) <= DATALEN)
 			slen = lsize+1-ci;
 		else 
@@ -115,14 +119,21 @@ float str_cli(FILE *fp, int sockfd, long *len)
 			exit(1);
 		}
 		ci += slen;
+        
+        //receive the ack
+        if ((n= recv(sockfd, &ack, 2, 0))==-1) {
+            printf("error when receiving\n");
+            exit(1);
+        } else {
+            printf("Ack %d received, it is: %d \n", packetNo, ack.num);
+        }
+        if (ack.num != 1|| ack.len != 0) {
+            printf("Error in transmission! Transmitting again...\n");
+            ci -= slen;
+        }
 	}
-	if ((n= recv(sockfd, &ack, 2, 0))==-1)                                   //receive the ack
-	{
-		printf("error when receiving\n");
-		exit(1);
-	}
-	if (ack.num != 1|| ack.len != 0)
-		printf("error in transmission\n");
+    
+    
 	gettimeofday(&recvt, NULL);
 	*len= ci;  //get current time
 	tv_sub(&recvt, &sendt); // get the whole trans time
