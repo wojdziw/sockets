@@ -110,7 +110,7 @@ float str_cli(FILE *fp, int sockfd, long *len, int packet_length)
         printf("So far sent %ld bytes \n", ci);
         packetNo ++;
         
-		if ((lsize+1-ci) <= DATALEN)
+		if ((lsize+1-ci) <= packet_length)
 			slen = lsize+1-ci;
 		else 
 			slen = packet_length;

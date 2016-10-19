@@ -179,10 +179,9 @@ void str_ser(int sockfd, float error_probability, int packet_length)
 	printf("Time(ms) : %.3f, Data sent(byte): %d\nData rate: %f (Kbytes/s)\n", ti, (int)lseek, rt);
 
 	FILE *results;
-	char result[] = "\n ";
-	std::ostringstream myString;
 
-	myString<<ti << " " <<result;
+	char result[1000];
+	sprintf(result, "%.3f %d %.3f %d %f \n", error_probability, packet_length, ti, (int)lseek, rt);
 
 	results = fopen("results.txt", "a");
 	fputs(result, results);
