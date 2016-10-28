@@ -5,7 +5,7 @@ tcp_client.c: the source file of the client in tcp transmission
 #include "headsock.h"
 
 float str_cli(FILE *fp, int sockfd, long *len, int packet_length); //transmission function
-void tv_sub(struct  timeval *out, struct timeval *in); //calcu the time interval between out and in
+void tv_sub(struct  timeval *out, struct timeval *in); //calculate the time interval between out and in
 
 int main(int argc, char **argv)
 {
